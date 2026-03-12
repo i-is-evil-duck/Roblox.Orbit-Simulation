@@ -93,10 +93,30 @@ for _, data in ipairs(planetsData) do
 	local theta = trueAnomalyFromMean(math.rad(data.meanAnomaly), data.e)
 	local r = getScaledDistance(data.a, data.e, theta)
 	local inclination = math.rad(data.inclination)
-	local x = r * math.cos(theta)
-	local z = r * math.sin(theta)
-	local y = r * math.sin(inclination) * math.sin(theta)
-	planet.Position = Vector3.new(x, y, z)
+	local orbitCFrame = CFrame.Angles(inclination, 0, 0)
+	local localPos = Vector3.new(r * math.cos(theta), 0, r * math.sin(theta))
+	local worldPos = orbitCFrame:pointToWorldSpace(localPos)
+	planet.Position = worldPos
+
+	local orbitCFrame = CFrame.Angles(inclination, 0, 0)
+	for i = 0, 360, 5 do
+		local angle = math.rad(i)
+		local trailR = getScaledDistance(data.a, data.e, angle)
+		local localPos = Vector3.new(trailR * math.cos(angle), 0, trailR * math.sin(angle))
+		local worldPos = orbitCFrame:pointToWorldSpace(localPos)
+		
+		local trail = Instance.new("Part")
+		trail.Name = data.name .. "Trail"
+		trail.Shape = Enum.PartType.Ball
+		trail.Size = Vector3.new(0.05, 0.05, 0.05)
+		trail.Anchored = true
+		trail.CanCollide = false
+		trail.Material = Enum.Material.SmoothPlastic
+		trail.Color = data.color
+		trail.Transparency = 0.7
+		trail.CFrame = CFrame.new(worldPos)
+		trail.Parent = workspace
+	end
 
 	local axisLine = Instance.new("Part")
 	axisLine.Name = data.name .. "Axis"
@@ -284,11 +304,11 @@ RunService.Heartbeat:Connect(function(deltaTime)
 
 		p.rotationAngle = p.rotationAngle + (360 / data.rotationPeriod) * dt
 		p.entity.CFrame = CFrame.new(Vector3.new(x, y, z)) * CFrame.Angles(p.axialTilt, math.rad(p.rotationAngle), 0)
-
+		
 		if p.axisLine then
 			p.axisLine.CFrame = CFrame.new(x, y, z) * CFrame.Angles(p.axialTilt, math.rad(p.rotationAngle), 0)
 		end
-
+		
 		if p.ring then
 			p.ring.CFrame = CFrame.new(x, y, z) * CFrame.Angles(p.axialTilt, math.rad(p.rotationAngle), 0)
 		end
